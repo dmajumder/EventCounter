@@ -3,7 +3,7 @@
 // Package:    EventCounter
 // Class:      EventCounter
 //
-/**\class EventCounter EventCounter.cc MyAnalysis/EventCounter/src/EventCounter.cc
+/**\class EventCounter EventCounter.cc Analysis/EventCounter/src/EventCounter.cc
 
  Description: [one line class summary]
 
@@ -24,7 +24,7 @@
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
-
+#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
@@ -32,6 +32,8 @@
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 #include "TH1D.h"
 //
@@ -59,6 +61,9 @@ class EventCounter : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       edm::Service<TFileService> fs;
 
+      std::string   l_genEvtInfoProd                         ; 
+      bool          isData_                                  ; 
+      edm::EDGetTokenT<GenEventInfoProduct> t_genEvtInfoProd ; 
       TH1D *hEventCount;
 };
 
@@ -73,19 +78,22 @@ class EventCounter : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-EventCounter::EventCounter(const edm::ParameterSet& iConfig)
+EventCounter::EventCounter(const edm::ParameterSet& iConfig) : 
+  l_genEvtInfoProd (iConfig.getParameter<std::string> ("genEvtInfoProdName")),
+  isData_ (iConfig.getParameter<bool> ("isData"))  
 
 {
-   //now do what ever initialization is needed
-   hEventCount = fs->make<TH1D>("hEventCount","Event Count", 1, -0.5, 0.5);
+  t_genEvtInfoProd = consumes<GenEventInfoProduct>(l_genEvtInfoProd) ; 
+  //now do what ever initialization is needed
+  hEventCount = fs->make<TH1D>("hEventCount","Event Count", 1, -0.5, 0.5);
 }
 
 
 EventCounter::~EventCounter()
 {
 
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
+  // do anything here that needs to be done at desctruction time
+  // (e.g. close files, deallocate resources etc.)
 
 }
 
@@ -95,45 +103,52 @@ EventCounter::~EventCounter()
 //
 
 // ------------ method called for each event  ------------
-void
-EventCounter::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
-{
-   hEventCount->Fill(0.);
+void EventCounter::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+  using namespace edm ; 
+  double evtwt(1.0) ; 
+  if ( !isData_ ) {
+    Handle<GenEventInfoProduct> h_genEvtInfoProd; 
+    iEvent.getByToken(t_genEvtInfoProd, h_genEvtInfoProd);
+    evtwt = h_genEvtInfoProd->weight() ; 
+    evtwt /= abs(evtwt) ; 
+  }
+
+  hEventCount->Fill(0.,evtwt);
 }
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void
+  void
 EventCounter::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void
+  void
 EventCounter::endJob()
 {
 }
 
 // ------------ method called when starting to processes a run  ------------
-void
+  void
 EventCounter::beginRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when ending the processing of a run  ------------
-void
+  void
 EventCounter::endRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
-void
+  void
 EventCounter::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when ending the processing of a luminosity block  ------------
-void
+  void
 EventCounter::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
