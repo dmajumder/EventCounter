@@ -61,10 +61,11 @@ class EventCounter : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       edm::Service<TFileService> fs;
 
-      std::string   l_genEvtInfoProd                         ; 
-      bool          isData_                                  ; 
+      const std::string   l_genEvtInfoProd                   ; 
+      const bool          isData_                            ; 
       edm::EDGetTokenT<GenEventInfoProduct> t_genEvtInfoProd ; 
-      TH1D *hEventCount;
+      TH1D *hEventCount_nowt;
+      TH1D *hEventCount_wt;
 };
 
 //
@@ -85,7 +86,8 @@ EventCounter::EventCounter(const edm::ParameterSet& iConfig) :
 {
   t_genEvtInfoProd = consumes<GenEventInfoProduct>(l_genEvtInfoProd) ; 
   //now do what ever initialization is needed
-  hEventCount = fs->make<TH1D>("hEventCount","Event Count", 1, -0.5, 0.5);
+  hEventCount_wt = fs->make<TH1D>("hEventCount_wt","Event Count", 1, -0.5, 0.5);
+  hEventCount_nowt = fs->make<TH1D>("hEventCount_nowt","Event Count", 1, -0.5, 0.5);
 }
 
 
@@ -113,7 +115,8 @@ void EventCounter::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     evtwt /= abs(evtwt) ; 
   }
 
-  hEventCount->Fill(0.,evtwt);
+  hEventCount_nowt->Fill(0.);
+  hEventCount_wt->Fill(0.,evtwt);
 }
 
 
