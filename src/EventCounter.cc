@@ -107,12 +107,13 @@ EventCounter::~EventCounter()
 // ------------ method called for each event  ------------
 void EventCounter::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm ; 
+  using namespace std ; 
   double evtwt(1.0) ; 
   if ( !isData_ ) {
     Handle<GenEventInfoProduct> h_genEvtInfoProd; 
     iEvent.getByToken(t_genEvtInfoProd, h_genEvtInfoProd);
     evtwt = h_genEvtInfoProd->weight() ; 
-    evtwt /= abs(evtwt) ; 
+    evtwt /= std::abs(evtwt) ; 
   }
 
   hEventCount_nowt->Fill(0.);
